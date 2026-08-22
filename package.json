@@ -1,0 +1,41 @@
+{
+  "name": "@valuescript/vsc",
+  "version": "1.0.0",
+  "description": "ValueScript compiler — compiles immutable .vs files into plain, dependency-free JavaScript. Powered by Vexify.",
+  "license": "Apache-2.0",
+  "author": "Vexify",
+  "main": "./dist/cli/index.js",
+  "bin": {
+    "vsc": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "compiler",
+    "immutable",
+    "valuescript",
+    "vexify",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vexify-org/yaggs": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.0",
+    "tsup": "^8.0.0",
+    "vitest": "^2.0.0"
+  }
+}
