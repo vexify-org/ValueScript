@@ -2,93 +2,73 @@
 /**
  * @fileoverview ValueScript CLI (Vexify).
  *
- *   vsc compile <file.vs> --out-dir dist
- *   vsc compile <file.vs> --out-dir dist --watch
- *   vsc <file.vs> -o dist
+ *   valuescript compile <file.vs> --out-dir dist
+ *   valuescript compile <file.vs> --out-dir dist --watch
+ *   valuescript <file.vs> -o dist
  *
- * Reads a `.vs` source file, compiles it to self-contained JavaScript, and
- * writes the result next to the same basename with a `.js` extension inside the
- * output directory (default: `./dist`).
+ * Uses `@vexify-org/yaggs` (a zero-dependency CLI argument parser) for argv
+ * handling. The compiler core itself has no external dependencies.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
+import yaggs from '@vexify-org/yaggs';
 import { transformValueScript } from '../compiler/transformer.js';
-
-interface CliOptions {
-  /** The input `.vs` file path (last positional argument). */
-  input?: string;
-  /** Output directory for the compiled `.js` file. */
-  outDir: string;
-  /** Watch the input file and recompile on change. */
-  watch: boolean;
-}
 
 const VERSION = '0.1.0';
 
-function printHelp(): void {
-  const text = `
-valuescript - ValueScript compiler (Powered by Vexify)
+// `yaggs` is a factory that returns a Yaggs instance (it is not itself a
+// parser). With `pkg` set, `--version`/`--help` are handled by yaggs, which
+// prints and exits cleanly via the default exitProcess behavior.
+const cli = yaggs({ pkg: { version: VERSION } })
+  .usage('$0 <input.vs> [options]')
+  .option('out-dir', {
+    alias: ['o'],
+    type: 'string',
+    description: 'Output directory (default: ./dist)',
+    default: './dist',
+  })
+  .option('watch', {
+    alias: ['w'],
+    type: 'boolean',
+    description: 'Recompile when the input file changes',
+    default: false,
+  });
+// `--help` / `--version` are provided by yaggs' built-in options.
 
-Usage:
-  vsc <input.vs> [options]
-  vsc compile <input.vs> [options]
+const argv = cli.parse(process.argv.slice(2)) as {
+  input?: string;
+  _: Array<string | number>;
+  'out-dir'?: string;
+  outDir?: string;
+  watch?: boolean;
+  version?: boolean;
+};
 
-Options:
-  -o, --out-dir <dir>   Output directory (default: ./dist)
-  -w, --watch           Recompile when the input file changes
-  -v, --version         Print the version and exit
-  -h, --help            Show this help
-`;
-  process.stdout.write(text);
-}
+const outDir = argv.outDir ?? argv['out-dir'] ?? './dist';
+const watch = !!argv.watch;
 
-function parseArgs(argv: string[]): CliOptions {
-  const options: CliOptions = { outDir: './dist', watch: false };
-  const positional: string[] = [];
-
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === '-h' || arg === '--help') {
-      printHelp();
-      process.exit(0);
-    } else if (arg === '-v' || arg === '--version') {
-      process.stdout.write(`valuescript v${VERSION}\n`);
-      process.exit(0);
-    } else if (arg === '-o' || arg === '--out-dir') {
-      const value = argv[++i];
-      if (!value) {
-        console.error(`vsc: option ${arg} requires a value`);
-        process.exit(1);
-      }
-      options.outDir = value;
-    } else if (arg === '-w' || arg === '--watch') {
-      options.watch = true;
-    } else if (arg === 'compile') {
-      // Subcommand tag; ignore.
-      positional.push('compile');
-    } else if (arg.startsWith('-') && arg !== '-') {
-      console.error(`vsc: unknown option: ${arg}`);
-      process.exit(1);
-    } else {
-      positional.push(arg);
-    }
-  }
-
-  const candidates = positional.filter((p) => p !== 'compile');
-  options.input = candidates[candidates.length - 1];
-  return options;
+function resolveInput(argvParsed: {
+  input?: string;
+  _: Array<string | number>;
+}): string | undefined {
+  if (argvParsed.input) return argvParsed.input;
+  const positional = (argvParsed._ as Array<string | number>).filter(
+    (x): x is string => typeof x === 'string',
+  );
+  const last = positional.filter((p) => p !== 'compile');
+  return last[last.length - 1];
 }
 
 /** Compiles a single `.vs` file and writes the `.js` result. */
 function compileFile(input: string, outDir: string): string {
   const absInput = path.resolve(input);
   if (!fs.existsSync(absInput)) {
-    console.error(`vsc: input file not found: ${absInput}`);
+    console.error(`valuescript: input file not found: ${absInput}`);
     process.exit(1);
   }
   if (fs.statSync(absInput).isDirectory()) {
-    console.error(`vsc: input is a directory, expected a .vs file: ${absInput}`);
+    console.error(`valuescript: input is a directory, expected a .vs file: ${absInput}`);
     process.exit(1);
   }
 
@@ -97,7 +77,7 @@ function compileFile(input: string, outDir: string): string {
   try {
     output = transformValueScript(source, absInput);
   } catch (err) {
-    console.error(`vsc: failed to compile ${absInput}`);
+    console.error(`valuescript: failed to compile ${absInput}`);
     console.error(err instanceof Error ? err.stack : String(err));
     process.exit(1);
   }
@@ -110,34 +90,34 @@ function compileFile(input: string, outDir: string): string {
 }
 
 function main(): void {
-  const { input, outDir, watch } = parseArgs(process.argv.slice(2));
-
+  // Note: `--version` / `--help` are handled and exited by `cli.parse()` above.
+  const input = resolveInput(argv);
   if (!input) {
-    console.error('vsc: missing input file');
-    printHelp();
+    console.error('valuescript: missing input file');
+    cli.showHelp();
     process.exit(1);
   }
 
   if (!input.endsWith('.vs')) {
-    console.warn(`vsc: warning: "${input}" does not have a .vs extension; compiling anyway`);
+    console.warn(`valuescript: warning: "${input}" does not have a .vs extension; compiling anyway`);
   }
 
   const outFile = compileFile(input, outDir);
-  console.log(`vsc: compiled ${input} -> ${outFile}`);
+  console.log(`valuescript: compiled ${input} -> ${outFile}`);
 
   if (!watch) return;
 
   let timer: NodeJS.Timeout | undefined;
   const absInput = path.resolve(input);
-  console.log(`vsc: watching ${absInput} (Ctrl+C to stop)`);
+  console.log(`valuescript: watching ${absInput} (Ctrl+C to stop)`);
   fs.watch(absInput, (eventType) => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       try {
         const out = compileFile(input, outDir);
-        console.log(`vsc: [${eventType}] recompiled ${input} -> ${out}`);
+        console.log(`valuescript: [${eventType}] recompiled ${input} -> ${out}`);
       } catch (err) {
-        console.error('vsc: watch recompile error:', err instanceof Error ? err.message : err);
+        console.error('valuescript: watch recompile error:', err instanceof Error ? err.message : err);
       }
     }, 80);
   });
