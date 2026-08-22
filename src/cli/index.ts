@@ -15,7 +15,7 @@ import path from 'node:path';
 import yaggs from '@vexify-org/yaggs';
 import { transformValueScript } from '../compiler/transformer.js';
 
-const VERSION = '0.1.0';
+const VERSION = '1.0.0';
 
 // `yaggs` is a factory that returns a Yaggs instance (it is not itself a
 // parser). With `pkg` set, `--version`/`--help` are handled by yaggs, which
