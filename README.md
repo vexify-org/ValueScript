@@ -1,8 +1,8 @@
-# @vexify/vsc — ValueScript Compiler
+# valuescript — ValueScript Compiler
 
 **Powered by Vexify** · License: **Apache-2.0**
 
-`@vexify/vsc` is a production-grade compiler that turns `.vs` (**ValueScript**)
+`valuescript` is a production-grade compiler that turns `.vs` (**ValueScript**)
 source files into **plain, fully self-contained JavaScript**. ValueScript is a
 strict *immutable* superset of JavaScript: the compiler statically rewrites every
 mutable operation into pure, immutable expressions. The emitted `.js` file has
@@ -17,7 +17,7 @@ dependency) and can be installed globally as a CLI, or used programmatically.
 ## Installation
 
 ```bash
-npm install -g @vexify/vsc
+npm install -g valuescript
 ```
 
 ## Usage
@@ -42,7 +42,7 @@ The output file keeps the input basename, but with a `.js` extension
 ### Programmatic API
 
 ```typescript
-import { transformValueScript } from '@vexify/vsc/src/compiler/transformer';
+import { transformValueScript } from 'valuescript/src/compiler/transformer';
 
 const js = transformValueScript('let x = { a: 1 }; x.a = 2;', 'sample.vs');
 console.log(js); // self-contained JavaScript

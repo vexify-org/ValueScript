@@ -28,7 +28,7 @@ const VERSION = '0.1.0';
 
 function printHelp(): void {
   const text = `
-@vexify/vsc - ValueScript compiler (Powered by Vexify)
+valuescript - ValueScript compiler (Powered by Vexify)
 
 Usage:
   vsc <input.vs> [options]
@@ -53,7 +53,7 @@ function parseArgs(argv: string[]): CliOptions {
       printHelp();
       process.exit(0);
     } else if (arg === '-v' || arg === '--version') {
-      process.stdout.write(`@vexify/vsc v${VERSION}\n`);
+      process.stdout.write(`valuescript v${VERSION}\n`);
       process.exit(0);
     } else if (arg === '-o' || arg === '--out-dir') {
       const value = argv[++i];

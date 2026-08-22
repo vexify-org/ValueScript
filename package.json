@@ -1,5 +1,5 @@
 {
-  "name": "@vexify/vsc",
+  "name": "valuescript",
   "version": "0.1.0",
   "description": "ValueScript compiler — compiles immutable .vs files into plain, dependency-free JavaScript. Powered by Vexify.",
   "license": "Apache-2.0",
